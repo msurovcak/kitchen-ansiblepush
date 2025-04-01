@@ -68,6 +68,7 @@ provisioner         :
     generate_inv        : true
     use_instance_name   : false  # use short (platform) instead of instance name by default
     idempotency_test    : false
+    log_ansible_run     : false # log (info) ansible stdout so it appears in kitchen log
 
     ## When running on EC2 with Windows and using get-password pass the password as ansible_password variable
     pass_transport_password: false

@@ -57,6 +57,7 @@ module Kitchen
       default_config :module_path, nil
       default_config :pass_transport_password, false
       default_config :environment_vars, {}
+      default_config :log_ansible_run, false
 
       # For tests disable if not needed
       default_config :chef_bootstrap_url, 'https://omnitruck.chef.io/install.sh'
@@ -243,10 +244,14 @@ module Kitchen
 
       def exec_ansible_command(env, command, desc)
         debug("env=#{env} command=#{command}")
-        system(env, command.to_s)
-        exit_code = $CHILD_STATUS.exitstatus
-        debug("ansible-playbook exit code = #{exit_code}")
-        raise UserError, "#{desc} returned a non zero #{exit_code}. Please see the output above." if exit_code.to_i != 0
+        Open3.popen2e(env, command) do |_stdin, std_eo, thread|
+          std_eo.each_line do |l|
+            conf[:log_ansible_run] ? info(l.strip) : $stdout.write(l)
+          end
+          exit_code = thread.value
+          debug("ansible-playbook exit code = #{exit_code}")
+          raise UserError, "#{desc} returned a non zero #{exit_code}. Please see the output above." if exit_code.to_i != 0
+        end
       end
 
       def instance_connection_option
